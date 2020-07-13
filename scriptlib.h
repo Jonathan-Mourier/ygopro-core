@@ -138,6 +138,7 @@ public:
 	static int32 card_get_equip_target(lua_State *L);
 	static int32 card_get_pre_equip_target(lua_State *L);
 	static int32 card_check_equip_target(lua_State *L);
+	static int32 card_check_union_target(lua_State *L);
 	static int32 card_get_union_count(lua_State *L);
 	static int32 card_get_overlay_group(lua_State *L);
 	static int32 card_get_overlay_count(lua_State *L);
@@ -188,7 +189,7 @@ public:
 	static int32 card_is_disabled(lua_State *L);
 	static int32 card_is_destructable(lua_State *L);
 	static int32 card_is_summonable(lua_State *L);
-	static int32 card_is_fusion_summonable_card(lua_State* L);
+	static int32 card_is_fusion_summonable_card(lua_State *L);
 	static int32 card_is_msetable(lua_State *L);
 	static int32 card_is_ssetable(lua_State *L);
 	static int32 card_is_special_summonable(lua_State *L);
@@ -508,6 +509,7 @@ public:
 	static int32 duel_get_ritual_material(lua_State *L);
 	static int32 duel_release_ritual_material(lua_State *L);
 	static int32 duel_get_fusion_material(lua_State *L);
+	static int32 duel_is_summon_cancelable(lua_State *L);
 	static int32 duel_set_must_select_cards(lua_State *L);
 	static int32 duel_grab_must_select_cards(lua_State *L);
 	static int32 duel_set_target_card(lua_State *L);
