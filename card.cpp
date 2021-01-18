@@ -1899,8 +1899,10 @@ void card::reset(uint32 id, uint32 reset_type) {
 			battled_cards.clear();
 			reset_effect_count();
 			auto pr = field_effect.equal_range(EFFECT_DISABLE_FIELD);
-			for(; pr.first != pr.second; ++pr.first)
-				pr.first->second->value = 0;
+			for(; pr.first != pr.second; ++pr.first){
+				if(!pr.first->second->is_flag(EFFECT_FLAG_FUNC_VALUE))
+					pr.first->second->value = 0;
+			}
 		}
 		if(id & (RESET_TODECK | RESET_TOHAND | RESET_TOGRAVE | RESET_REMOVE | RESET_TEMP_REMOVE
 			| RESET_OVERLAY | RESET_MSCHANGE | RESET_TOFIELD  | RESET_TURN_SET)) {
@@ -2058,18 +2060,31 @@ void card::release_relation(effect* peffect) {
 int32 card::leave_field_redirect(uint32 reason) {
 	effect_set es;
 	uint32 redirect;
+	uint32 redirects = 0;
 	if(data.type & TYPE_TOKEN)
 		return 0;
 	filter_effect(EFFECT_LEAVE_FIELD_REDIRECT, &es);
 	for(int32 i = 0; i < es.size(); ++i) {
 		redirect = es[i]->get_value(this, 0);
 		if((redirect & LOCATION_HAND) && !is_affected_by_effect(EFFECT_CANNOT_TO_HAND) && pduel->game_field->is_player_can_send_to_hand(es[i]->get_handler_player(), this))
-			return redirect;
+			redirects |= redirect;
 		else if((redirect & LOCATION_DECK) && !is_affected_by_effect(EFFECT_CANNOT_TO_DECK) && pduel->game_field->is_player_can_send_to_deck(es[i]->get_handler_player(), this))
-			return redirect;
+			redirects |= redirect;
 		else if((redirect & LOCATION_REMOVED) && !is_affected_by_effect(EFFECT_CANNOT_REMOVE) && pduel->game_field->is_player_can_remove(es[i]->get_handler_player(), this, REASON_EFFECT))
-			return redirect;
+			redirects |= redirect;
 	}
+	if(redirects & LOCATION_REMOVED)
+		return LOCATION_REMOVED;
+	// the ruling for the priority of the following redirects can't be confirmed for now
+	if(redirects & LOCATION_DECK) {
+		if((redirects & LOCATION_DECKBOT) == LOCATION_DECKBOT)
+			return LOCATION_DECKBOT;
+		if((redirects & LOCATION_DECKSHF) == LOCATION_DECKSHF)
+			return LOCATION_DECKSHF;
+		return LOCATION_DECK;
+	}
+	if(redirects & LOCATION_HAND)
+		return LOCATION_HAND;
 	return 0;
 }
 int32 card::destination_redirect(uint8 destination, uint32 reason) {
@@ -2844,7 +2859,7 @@ void card::get_unique_target(card_set* cset, int32 controler, card* icard) {
 		const auto& player = pduel->game_field->player[controler ^ p];
 		if(unique_location & LOCATION_MZONE) {
 			for(auto& pcard : player.list_mzone) {
-				if(pcard && (pcard != icard) && pcard->is_position(POS_FACEUP) && !pcard->get_status(STATUS_BATTLE_DESTROYED | STATUS_SPSUMMON_STEP)
+				if(pcard && (pcard != icard) && pcard->is_position(POS_FACEUP) && !pcard->get_status(STATUS_SPSUMMON_STEP)
 					&& check_unique_code(pcard))
 					cset->insert(pcard);
 			}
@@ -3612,7 +3627,7 @@ int32 card::is_capable_be_battle_target(card* pcard) {
 		return FALSE;
 	if(pcard->is_affected_by_effect(EFFECT_CANNOT_SELECT_BATTLE_TARGET, this))
 		return FALSE;
-	if(is_affected_by_effect(EFFECT_IGNORE_BATTLE_TARGET))
+	if(is_affected_by_effect(EFFECT_IGNORE_BATTLE_TARGET, pcard))
 		return FALSE;
 	return TRUE;
 }

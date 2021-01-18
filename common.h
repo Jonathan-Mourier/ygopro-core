@@ -50,6 +50,9 @@ struct card_sort {
 #define LOCATION_ONFIELD	0x0c		//
 #define LOCATION_FZONE		0x100		//
 #define LOCATION_PZONE		0x200		//
+//For redirect
+#define LOCATION_DECKBOT	0x10001		//Return to deck bottom
+#define LOCATION_DECKSHF	0x20001		//Return to deck and shuffle
 
 //Positions
 #define POS_FACEUP_ATTACK		0x1
@@ -152,8 +155,9 @@ struct card_sort {
 #define REASON_REPLACE		0x1000000	//
 #define REASON_DRAW			0x2000000	//
 #define REASON_REDIRECT		0x4000000	//
-//#define REASON_REVEAL			0x8000000	//
+#define REASON_REVEAL		0x8000000	//
 #define REASON_LINK			0x10000000	//
+#define REASON_LOST_OVERLAY	0x20000000	//
 
 //Status
 #define STATUS_DISABLED				0x0001	//

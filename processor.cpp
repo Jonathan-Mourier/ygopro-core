@@ -1820,7 +1820,7 @@ int32 field::process_instant_event() {
 				}
 			}
 		}
-		if(ev.event_code == EVENT_ADJUST || ((ev.event_code & 0xf000) == EVENT_PHASE_START))
+		if(ev.event_code == EVENT_ADJUST || ev.event_code == EVENT_BREAK_EFFECT || ((ev.event_code & 0xf000) == EVENT_PHASE_START))
 			continue;
 		//triggers
 		pr = effects.trigger_f_effect.equal_range(ev.event_code);
@@ -2549,7 +2549,12 @@ int32 field::process_battle_command(uint16 step) {
 				core.units.begin()->step = 5;
 				return FALSE;
 			}
-			add_process(PROCESSOR_SELECT_YESNO, 0, 0, 0, infos.turn_player, 31);
+			if(is_player_affected_by_effect(infos.turn_player, EFFECT_PATRICIAN_OF_DARKNESS)) {
+				add_process(PROCESSOR_SELECT_EFFECTYN, 0, 0, (group*)core.attacker, 1 - infos.turn_player, 31);
+			}
+			else {
+				add_process(PROCESSOR_SELECT_YESNO, 0, 0, 0, infos.turn_player, 31);
+			}
 			return FALSE;
 		}
 		// no target and not direct attackable
@@ -2588,11 +2593,12 @@ int32 field::process_battle_command(uint16 step) {
 			returns.ivalue[0] = -2;
 		} else {
 			if(core.select_cards.size()) {
+				auto opposel = is_player_affected_by_effect(infos.turn_player, EFFECT_PATRICIAN_OF_DARKNESS);
 				pduel->write_buffer8(MSG_HINT);
 				pduel->write_buffer8(HINT_SELECTMSG);
-				pduel->write_buffer8(infos.turn_player);
+				pduel->write_buffer8(opposel ? 1 - infos.turn_player : infos.turn_player);
 				pduel->write_buffer32(549);
-				add_process(PROCESSOR_SELECT_CARD, 0, 0, 0, infos.turn_player + (core.attack_cancelable ? 0x20000 : 0), 0x10001);
+				add_process(PROCESSOR_SELECT_CARD, 0, 0, 0, opposel ? 1 - infos.turn_player : infos.turn_player + (core.attack_cancelable ? 0x20000 : 0), 0x10001);
 			} else {
 				core.units.begin()->arg3 = TRUE;
 				core.units.begin()->step = 6;
@@ -3707,6 +3713,10 @@ int32 field::process_turn(uint16 step, uint8 turn_player) {
 		pduel->write_buffer16(infos.phase);
 		raise_event((card*)0, EVENT_PREDRAW, 0, 0, 0, turn_player, 0);
 		process_instant_event();
+		pduel->write_buffer8(MSG_HINT);
+		pduel->write_buffer8(HINT_EVENT);
+		pduel->write_buffer8(turn_player);
+		pduel->write_buffer32(27);
 		if(core.new_fchain.size() || core.new_ochain.size())
 			add_process(PROCESSOR_POINT_EVENT, 0, 0, 0, 0, 0);
 		return FALSE;
@@ -4145,7 +4155,7 @@ int32 field::add_chain(uint16 step) {
 				phandler->set_status(STATUS_LEAVE_CONFIRMED, TRUE);
 		}
 		if((phandler->get_type() & (TYPE_SPELL | TYPE_TRAP))
-				&& (phandler->data.type & (TYPE_CONTINUOUS | TYPE_FIELD | TYPE_EQUIP | TYPE_PENDULUM))
+				&& (phandler->get_type() & (TYPE_CONTINUOUS | TYPE_FIELD | TYPE_EQUIP | TYPE_PENDULUM))
 				&& phandler->is_has_relation(clit) && phandler->current.location == LOCATION_SZONE
 				&& !peffect->is_flag(EFFECT_FLAG_FIELD_ONLY))
 			clit.flag |= CHAIN_CONTINUOUS_CARD;
@@ -4528,7 +4538,7 @@ int32 field::refresh_location_info(uint16 step) {
 		filter_field_effect(EFFECT_DISABLE_FIELD, &eset);
 		for (int32 i = 0; i < eset.size(); ++i) {
 			uint32 value = eset[i]->get_value();
-			if(value && !eset[i]->is_flag(EFFECT_FLAG_REPEAT)) {
+			if(value) {
 				player[0].disabled_location |= value & 0x1f7f;
 				player[1].disabled_location |= (value >> 16) & 0x1f7f;
 			} else
