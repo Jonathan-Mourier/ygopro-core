@@ -41,12 +41,12 @@ struct card_data {
 
 struct card_state {
 	card_state()
-		: code(0), code2(0), setcode(0), type(0), level(0), rank(0), link(0), lscale(0), rscale(0), attribute(0), race(0), attack(0), defense(0), base_attack(0), base_defense(0), 
+		: code(0), code2(0), type(0), level(0), rank(0), link(0), lscale(0), rscale(0), attribute(0), race(0), attack(0), defense(0), base_attack(0), base_defense(0), 
 		controler(PLAYER_NONE), location(0), sequence(0), position(0), reason(0), pzone(false), reason_card(nullptr), reason_player(PLAYER_NONE), reason_effect(nullptr) {}
 
 	uint32 code;
 	uint32 code2;
-	uint16 setcode;
+	std::vector<uint32> setcode;
 	uint32 type;
 	uint32 level;
 	uint32 rank;
@@ -69,6 +69,7 @@ struct card_state {
 	uint8 reason_player;
 	effect* reason_effect;
 	bool is_location(int32 loc) const;
+	void init_state();
 };
 
 struct query_cache {
@@ -90,6 +91,28 @@ struct query_cache {
 	uint32 rscale;
 	uint32 link_marker;
 };
+
+struct material_info {
+	// Synchron
+	card* limit_tuner;
+	group* limit_syn;
+	int32 limit_syn_minc;
+	int32 limit_syn_maxc;
+	// Xyz
+	group* limit_xyz;
+	int32 limit_xyz_minc;
+	int32 limit_xyz_maxc;
+	// Link
+	group* limit_link;
+	card* limit_link_card;
+	int32 limit_link_minc;
+	int32 limit_link_maxc;
+
+	material_info()
+		: limit_tuner(nullptr), limit_syn(nullptr), limit_syn_minc(0), limit_syn_maxc(0), limit_xyz(nullptr), limit_xyz_minc(0), limit_xyz_maxc(0), 
+		limit_link(nullptr), limit_link_card(nullptr), limit_link_minc(0), limit_link_maxc(0) {}
+};
+const material_info null_info;
 
 class card {
 public:
@@ -210,6 +233,8 @@ public:
 	uint32 get_synchro_type();
 	uint32 get_xyz_type();
 	uint32 get_link_type();
+	std::pair<int32, int32> get_base_atk_def();
+	std::pair<int32, int32> get_atk_def();
 	int32 get_base_attack();
 	int32 get_attack();
 	int32 get_base_defense();
@@ -225,8 +250,10 @@ public:
 	uint32 get_attribute();
 	uint32 get_fusion_attribute(uint8 playerid);
 	uint32 get_link_attribute(uint8 playerid);
+	uint32 get_grave_attribute(uint8 playerid);
 	uint32 get_race();
 	uint32 get_link_race(uint8 playerid);
+	uint32 get_grave_race(uint8 playerid);
 	uint32 get_lscale();
 	uint32 get_rscale();
 	uint32 get_link_marker();
@@ -297,7 +324,7 @@ public:
 	int32 check_summon_procedure(effect* proc, uint8 playerid, uint8 ignore_count, uint8 min_tribute, uint32 zone);
 	int32 filter_set_procedure(uint8 playerid, effect_set* eset, uint8 ignore_count, uint8 min_tribute, uint32 zone);
 	int32 check_set_procedure(effect* proc, uint8 playerid, uint8 ignore_count, uint8 min_tribute, uint32 zone);
-	void filter_spsummon_procedure(uint8 playerid, effect_set* eset, uint32 summon_type);
+	void filter_spsummon_procedure(uint8 playerid, effect_set* eset, uint32 summon_type, material_info info = null_info);
 	void filter_spsummon_procedure_g(uint8 playerid, effect_set* eset);
 	effect* is_affected_by_effect(int32 code);
 	effect* is_affected_by_effect(int32 code, card* target);
@@ -312,14 +339,15 @@ public:
 	int32 check_cost_condition(int32 ecode, int32 playerid, int32 sumtype);
 	int32 is_summonable_card();
 	int32 is_fusion_summonable_card(uint32 summon_type);
-	int32 is_spsummonable(effect* proc);
+	int32 is_spsummonable(effect* proc, material_info info = null_info);
 	int32 is_summonable(effect* proc, uint8 min_tribute, uint32 zone = 0x1f, uint32 releasable = 0xff00ff);
 	int32 is_can_be_summoned(uint8 playerid, uint8 ingore_count, effect* peffect, uint8 min_tribute, uint32 zone = 0x1f);
 	int32 get_summon_tribute_count();
 	int32 get_set_tribute_count();
 	int32 is_can_be_flip_summoned(uint8 playerid);
-	int32 is_special_summonable(uint8 playerid, uint32 summon_type);
+	int32 is_special_summonable(uint8 playerid, uint32 summon_type, material_info info = null_info);
 	int32 is_can_be_special_summoned(effect* reason_effect, uint32 sumtype, uint8 sumpos, uint8 sumplayer, uint8 toplayer, uint8 nocheck, uint8 nolimit, uint32 zone);
+	uint8 get_spsummonable_position(effect* reason_effect, uint32 sumtype, uint8 sumpos, uint8 sumplayer, uint8 toplayer);
 	int32 is_setable_mzone(uint8 playerid, uint8 ignore_count, effect* peffect, uint8 min_tribute, uint32 zone = 0x1f);
 	int32 is_setable_szone(uint8 playerid, uint8 ignore_fd = 0);
 	int32 is_affect_by_effect(effect* reason_effect);
@@ -385,5 +413,7 @@ public:
 //double-name cards
 #define CARD_MARINE_DOLPHIN	78734254
 #define CARD_TWINKLE_MOSS	13857930
+
+#define CARD_ARTWORK_VERSIONS_OFFSET	10
 
 #endif /* CARD_H_ */
