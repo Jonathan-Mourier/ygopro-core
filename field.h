@@ -156,10 +156,10 @@ struct processor_unit {
 	uint16 step;
 	effect* peffect;
 	group* ptarget;
-	ptr arg1;
-	ptr arg2;
-	ptr arg3;
-	ptr arg4;
+	int32 arg1;
+	int32 arg2;
+	int32 arg3;
+	int32 arg4;
 	void* ptr1;
 	void* ptr2;
 
@@ -263,10 +263,11 @@ struct processor {
 	std::unordered_set<card*> unique_cards[2];
 	std::unordered_map<uint32, uint32> effect_count_code;
 	std::unordered_map<uint32, uint32> effect_count_code_duel;
+	std::unordered_map<uint32, uint32> effect_count_code_chain;
 	std::unordered_map<uint32, uint32> spsummon_once_map[2];
 	std::multimap<int32, card*, std::greater<int32>> xmaterial_lst;
 
-	ptr temp_var[4];
+	int32 temp_var[4];
 	uint32 global_flag;
 	uint16 pre_field[2];
 	std::set<uint16> opp_mzone;
@@ -478,6 +479,9 @@ public:
 	int32 get_attack_target(card* pcard, card_vector* v, uint8 chain_attack = FALSE, bool select_target = true);
 	bool confirm_attack_target();
 	void attack_all_target_check();
+	int32 get_must_material_list(uint8 playerid, uint32 limit, card_set* must_list);
+	int32 check_must_material(group* mg, uint8 playerid, uint32 limit);
+	void get_synchro_material(uint8 playerid, card_set* material, effect* ptuner = 0);
 	int32 check_synchro_material(card* pcard, int32 findex1, int32 findex2, int32 min, int32 max, card* smat, group* mg);
 	int32 check_tuner_material(card* pcard, card* tuner, int32 findex1, int32 findex2, int32 min, int32 max, card* smat, group* mg);
 	int32 check_other_synchro_material(const card_vector& nsyn, int32 lv, int32 min, int32 max, int32 mcount);
@@ -522,7 +526,7 @@ public:
 	int32 check_spself_from_hand_trigger(const chain& ch) const;
 	int32 is_able_to_enter_bp();
 
-	void add_process(uint16 type, uint16 step, effect* peffect, group* target, ptr arg1, ptr arg2, ptr arg3 = 0, ptr arg4 = 0, void* ptr1 = nullptr, void* ptr2 = nullptr);
+	void add_process(uint16 type, uint16 step, effect* peffect, group* target, int32 arg1, int32 arg2, int32 arg3 = 0, int32 arg4 = 0, void* ptr1 = nullptr, void* ptr2 = nullptr);
 	int32 process();
 	int32 execute_cost(uint16 step, effect* peffect, uint8 triggering_player);
 	int32 execute_operation(uint16 step, effect* peffect, uint8 triggering_player);
@@ -718,7 +722,7 @@ public:
 #define GLOBALFLAG_SCRAP_CHIMERA		0x4
 //#define GLOBALFLAG_DELAYED_QUICKEFFECT	0x8
 #define GLOBALFLAG_DETACH_EVENT			0x10
-#define GLOBALFLAG_MUST_BE_SMATERIAL	0x20
+//#define GLOBALFLAG_MUST_BE_SMATERIAL	0x20
 #define GLOBALFLAG_SPSUMMON_COUNT		0x40
 #define GLOBALFLAG_XMAT_COUNT_LIMIT		0x80
 #define GLOBALFLAG_SELF_TOGRAVE			0x100
