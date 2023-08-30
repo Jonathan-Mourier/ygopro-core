@@ -1075,6 +1075,7 @@ void field::swap_deck_and_grave(uint8 playerid) {
 		pcard->apply_field_effect();
 		pcard->enable_field_effect(true);
 		pcard->reset(RESET_TODECK, RESET_EVENT);
+		pcard->set_status(STATUS_PROC_COMPLETE, FALSE);
 	}
 	for(auto& pcard : ex) {
 		pcard->current.position = POS_FACEDOWN_DEFENSE;
@@ -1085,6 +1086,7 @@ void field::swap_deck_and_grave(uint8 playerid) {
 		pcard->apply_field_effect();
 		pcard->enable_field_effect(true);
 		pcard->reset(RESET_TODECK, RESET_EVENT);
+		pcard->set_status(STATUS_PROC_COMPLETE, FALSE);
 	}
 	player[playerid].list_extra.insert(player[playerid].list_extra.end() - player[playerid].extra_p_count, ex.begin(), ex.end());
 	reset_sequence(playerid, LOCATION_GRAVE);
@@ -1865,7 +1867,7 @@ void field::get_ritual_material(uint8 playerid, effect* peffect, card_set* mater
 	}
 	for(auto& pcard : player[1 - playerid].list_mzone) {
 		if(pcard && pcard->is_affect_by_effect(peffect)
-		        && pcard->is_affected_by_effect(EFFECT_EXTRA_RELEASE)
+		        && pcard->is_affected_by_effect(EFFECT_EXTRA_RELEASE) && pcard->is_position(POS_FACEUP)
 		        && pcard->is_releasable_by_nonsummon(playerid) && pcard->is_releasable_by_effect(playerid, peffect)
 				&& (no_level || pcard->get_level() > 0))
 			material->insert(pcard);
