@@ -10,8 +10,10 @@ project (ocgcore)
 set (OCGCORE_DIR "ygopro-core")
 
 set (OCGCORE_SRC
+  ${OCGCORE_DIR}/buffer.h
   ${OCGCORE_DIR}/card.cpp
   ${OCGCORE_DIR}/card.h
+  ${OCGCORE_DIR}/card_data.h
   ${OCGCORE_DIR}/common.h
   ${OCGCORE_DIR}/duel.cpp
   ${OCGCORE_DIR}/duel.h
@@ -38,6 +40,7 @@ set (OCGCORE_SRC
   ${OCGCORE_DIR}/processor.cpp
   ${OCGCORE_DIR}/scriptlib.cpp
   ${OCGCORE_DIR}/scriptlib.h
+  ${OCGCORE_DIR}/sort.h
 )
 
 set (LUA_DIR "lua/src")
